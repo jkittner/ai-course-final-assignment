@@ -1,0 +1,11 @@
+**data/
+**literature/
+*.ipynb
+.coverage
+.mypy_cache
+.pytest_cache
+.tox
+.vscode
+*.pyc
+htmlcov
+venv

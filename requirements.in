@@ -1,0 +1,4 @@
+matplotlib
+pillow
+scikit-learn
+tensorflow-gpu
