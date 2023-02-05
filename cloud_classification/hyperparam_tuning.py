@@ -122,7 +122,7 @@ def main() -> int:
     tuner = RandomSearch(
         hypermodel=build_model_partial,
         objective='val_accuracy',
-        max_trials=100,
+        max_trials=75,
         executions_per_trial=1,
         seed=42069,
         overwrite=True,
@@ -134,7 +134,7 @@ def main() -> int:
     tuner.search(
         x=model_data.x_train,
         y=model_data.y_train,
-        epochs=15,
+        epochs=100,
         validation_data=(model_data.x_test, model_data.y_test),
         callbacks=[keras.callbacks.TensorBoard('tensorboard_logs')],
     )
