@@ -2,3 +2,4 @@ matplotlib
 pillow
 scikit-learn
 tensorflow==2.10.1
+keras-tuner
