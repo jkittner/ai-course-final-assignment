@@ -48,7 +48,6 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
 def evaluate_model(
         history: keras.callbacks.History,
         model: keras.models.Sequential,
-        # x: keras.engine.sequential.Sequential
         x_test: npt.NDArray[np.number[Any]],
         y_test: npt.NDArray[np.number[Any]],
 ) -> None:

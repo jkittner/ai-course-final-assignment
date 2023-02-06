@@ -106,12 +106,20 @@ class ModelInput(NamedTuple):
     def normalize(
             self,
             divisor: float,
+            *,
             dtype: npt.DTypeLike = np.float64,
+            only_x: bool = True,
     ) -> ModelInput:
-        return ModelInput(
-            x=np.divide(self.x, divisor, dtype=dtype),
-            y=self.y,
-        )
+        if only_x is True:
+            return ModelInput(
+                x=np.divide(self.x, divisor, dtype=dtype),
+                y=self.y,
+            )
+        else:
+            return ModelInput(
+                x=np.divide(self.x, divisor, dtype=dtype),
+                y=np.divide(self.y, divisor, dtype=dtype),
+            )
 
 
 class TestTrainInput(NamedTuple):
