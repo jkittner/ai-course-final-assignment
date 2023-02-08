@@ -17,7 +17,7 @@ def prep_img_data(
         jitter: Jitter | None = None,
 ) -> ModelInput:
     x = read_img(
-        path=os.path.join(basedir, 'Images', file_pattern),
+        path=os.path.join(basedir, 'images', file_pattern),
         color_jitter=jitter,
         size=(128, 128),
     )
@@ -40,13 +40,11 @@ def prepare_test_train(
 ) -> TestTrainInput:
     day = prep_img_data(
         basedir=daytime_dir,
-        # basedir='data/swimseg',
         file_pattern='*.png',
         jitter=jitter,
     ).normalize(divisor=255.0, only_x=False)
     night = prep_img_data(
         basedir=nighttime_dir,
-        # basedir='data/swinseg',
         file_pattern='*.jpg',
         jitter=jitter,
     ).normalize(divisor=255.0, only_x=False)
