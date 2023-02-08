@@ -1,7 +1,7 @@
 **data/
 **literature/
-**hyper_param_tuning
-**tensorboard_logs
+**hyper_param_tuning*
+**tensorboard_logs*
 *.ipynb
 .coverage
 .mypy_cache
