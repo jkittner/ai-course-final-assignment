@@ -36,18 +36,19 @@ def prepare_test_train(
         *,
         test_size: float = 0.2,
         max_nr: int | None = None,
+        jitter: Jitter | None = None,
 ) -> TestTrainInput:
     day = prep_img_data(
         basedir=daytime_dir,
         # basedir='data/swimseg',
         file_pattern='*.png',
-        jitter=None,
+        jitter=jitter,
     ).normalize(divisor=255.0, only_x=False)
     night = prep_img_data(
         basedir=nighttime_dir,
         # basedir='data/swinseg',
         file_pattern='*.jpg',
-        jitter=None,
+        jitter=jitter,
     ).normalize(divisor=255.0, only_x=False)
 
     x = np.concatenate([day.x, night.x])
