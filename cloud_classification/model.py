@@ -16,8 +16,8 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     # conv 1
     model.add(
         keras.layers.Conv2D(
-            filters=32,
-            kernel_size=(11, 11),
+            filters=64,
+            kernel_size=(10, 10),
             padding='same',
             activation='relu',
             input_shape=input_shape,
@@ -28,17 +28,17 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     model.add(keras.layers.Conv2D(64, (5, 5), activation='relu'))
     model.add(keras.layers.MaxPooling2D((3, 3)))
     # conv 3
-    model.add(keras.layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(keras.layers.Conv2D(128, (3, 3), activation='relu'))
     # conv4
-    model.add(keras.layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(keras.layers.Conv2D(256, (3, 3), activation='relu'))
     model.add(keras.layers.MaxPooling2D((3, 3)))
     model.add(keras.layers.Flatten())
-    model.add(keras.layers.Dropout(rate=0.5))
+    model.add(keras.layers.Dropout(rate=0.55))
     # there are 5 possible classes
     model.add(keras.layers.Dense(units=5))
 
     model.compile(
-        optimizer=keras.optimizers.Adam(),
+        optimizer=keras.optimizers.Adam(learning_rate=0.0003968481343478242),
         loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'],
     )
@@ -85,10 +85,17 @@ def main() -> int:
     history = model.fit(
         x=model_data.x_train,
         y=model_data.y_train,
-        epochs=100,
+        epochs=200,
         validation_data=(model_data.x_test, model_data.y_test),
         verbose=1,
+        callbacks=[
+            keras.callbacks.TensorBoard('tensorboard_logs_cloud_class_final'),
+        ],
     )
+    print('saving model...')
+    model.save('cloud_class_model')
+    model.save('cloud_class_model.h5')
+
     print('evaluating model')
     evaluate_model(
         history=history,
