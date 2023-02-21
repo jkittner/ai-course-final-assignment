@@ -17,13 +17,16 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     # level 1
     model.add(
         keras.layers.Conv2D(
-            64,  kernel_size=(3, 3),
-            padding='same', activation='relu', input_shape=input_shape,
+            128,
+            kernel_size=(3, 3),
+            padding='same',
+            activation='relu',
+            input_shape=input_shape,
         ),
     )
     model.add(
         keras.layers.Conv2D(
-            64,
+            128,
             kernel_size=(3, 3),
             padding='same',
             activation='relu',
@@ -31,7 +34,7 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     )
     model.add(
         keras.layers.Conv2D(
-            64,
+            128,
             kernel_size=(3, 3),
             padding='same',
             activation='relu',
@@ -42,14 +45,14 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     # level 2
     model.add(
         keras.layers.Conv2D(
-            64, kernel_size=(3, 3),
+            128, kernel_size=(3, 3),
             padding='same',
             activation='relu',
         ),
     )
     model.add(
         keras.layers.Conv2D(
-            64,
+            128,
             kernel_size=(3, 3),
             padding='same',
             activation='relu',
@@ -57,7 +60,7 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     )
     model.add(
         keras.layers.Conv2D(
-            64,
+            128,
             kernel_size=(3, 3),
             padding='same',
             activation='relu',
@@ -68,7 +71,7 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     # level 3
     model.add(
         keras.layers.Conv2D(
-            64,
+            128,
             kernel_size=(3, 3),
             padding='same',
             activation='relu',
@@ -76,7 +79,7 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     )
     model.add(
         keras.layers.Conv2D(
-            64,
+            128,
             kernel_size=(3, 3),
             padding='same',
             activation='relu',
@@ -84,7 +87,7 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     )
     model.add(
         keras.layers.Conv2D(
-            64,
+            128,
             kernel_size=(3, 3),
             padding='same',
             activation='relu',
@@ -162,7 +165,7 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     model.add(keras.layers.Dense(1, activation='sigmoid'))
 
     model.compile(
-        optimizer=keras.optimizers.Adam(),
+        optimizer=keras.optimizers.Adam(learning_rate=0.00027602),
         loss=keras.losses.BinaryCrossentropy(),
         metrics=['accuracy'],
     )
@@ -201,10 +204,17 @@ def main() -> int:
     history = model.fit(
         x=model_data.x_train,
         y=model_data.y_train,
-        epochs=30,
+        epochs=200,
         validation_data=(model_data.x_test, model_data.y_test),
         verbose=1,
+        callbacks=[
+            keras.callbacks.TensorBoard('tensorboard_logs_cloud_frac_final'),
+        ],
     )
+    print('saving model...')
+    model.save('cloud_class_model')
+    model.save('cloud_class_model.h5')
+
     print('evaluating model')
     evaluate_model(
         history=history,
