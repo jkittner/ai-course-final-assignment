@@ -21,7 +21,7 @@ class ImgMask(NamedTuple):
 
 
 IMG_MASK = ImgMask(left=50, top=40, right=210, bottom=200)
-IMG_SHAPE = (125, 125)
+IMG_SHAPE = (128, 128)
 BASE_DIR_RGS = 'data/rgs'
 SWIMCAT_CLASSES = {
     'A-sky': 0,
