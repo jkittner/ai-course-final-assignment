@@ -185,7 +185,7 @@ def evaluate_model(
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
-    plt.savefig('learning.png')
+    plt.savefig('learning_cloud_frac.png')
     plt.close()
 
     test_loss, test_acc = model.evaluate(x_test,  y_test, verbose=2)
@@ -212,8 +212,8 @@ def main() -> int:
         ],
     )
     print('saving model...')
-    model.save('cloud_class_model')
-    model.save('cloud_class_model.h5')
+    model.save('cloud_frac_model')
+    model.save('cloud_frac_model.h5')
 
     print('evaluating model')
     evaluate_model(

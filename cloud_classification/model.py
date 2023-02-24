@@ -58,7 +58,7 @@ def evaluate_model(
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
-    plt.savefig('learning.png')
+    plt.savefig('learning_cloud_class.png')
     plt.close()
 
     test_loss, test_acc = model.evaluate(x_test,  y_test, verbose=2)
