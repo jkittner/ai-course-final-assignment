@@ -1,0 +1,22 @@
+version: "3"
+services:
+
+  app:
+    command: [
+      /usr/src/app/venv/bin/gunicorn,
+      --config, web/gunicorn_dev_cfg.py,
+      --log-level, 'DEBUG',
+      "web.wsgi:app"
+    ]
+    volumes:
+      - ./web:/usr/src/app/web
+      - ./cloud_classification:/usr/src/app/cloud_classification:ro
+      - ./resources:/usr/src/app/./resources:ro
+    ports:
+      - "5000:5000"
+
+  nginx:
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./web/nginx.dev.conf:/etc/nginx/conf.d/nginx.conf:ro
