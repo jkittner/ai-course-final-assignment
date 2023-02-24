@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import os
 from datetime import datetime
 from datetime import timezone
+from typing import TypeVar
 
 import keras
+import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
+import PIL.Image
 from flask import flash
 from flask import Flask
 from flask import redirect
@@ -28,8 +33,12 @@ class Config:
     SQLALCHEMY_DATABASE_URI = ''
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = 'sqlite:///project.db'
-    KERAS_CLOUD_CLASS_MODEL = keras.models.load_model('cloud_class_model')
-    KERAS_CLOUD_FRAC_MODEL = None
+    KERAS_CLOUD_CLASS_MODEL = keras.models.load_model(
+        'resources/cloud_class_model.h5',
+    )
+    KERAS_CLOUD_FRAC_MODEL = keras.models.load_model(
+        'resources/cloud_frac_model.h5',
+    )
     DATA_DIR = 'web/static/img'
     SWIMCAT_CLASS_MAP = {v: k for k, v in SWIMCAT_CLASSES.items()}
     # TODO: max req len!
@@ -56,10 +65,17 @@ class Image(db.Model):  # type: ignore[name-defined]
 
     @property
     def date_formatted(self) -> str:
-        return self.date.strftime('%Y-%m-%d %H:%M-%S')
+        return self.date.strftime('%Y-%m-%d %H:%M:%S')
+
+    @property
+    def id_css_escaped(self) -> str:
+        if self.id[0].isnumeric():
+            return f'\\3{self.id[0]} {self.id[1:]}'
+        else:
+            return self.id
 
 
-ALLOWED_FILE_TYPES = ('jpg',)
+ALLOWED_FILE_TYPES = ('jpg', 'jpeg', 'png')
 
 
 class SubmitImage(FlaskForm):
@@ -68,7 +84,7 @@ class SubmitImage(FlaskForm):
         validators=(
             FileAllowed(
                 ALLOWED_FILE_TYPES,
-                message=f'Only {",".join(ALLOWED_FILE_TYPES)} Files Allowed',
+                message=f'Only {", ".join(ALLOWED_FILE_TYPES)} Files Allowed',
             ),
             FileRequired(),
         ),
@@ -89,12 +105,81 @@ def create_app() -> Flask:
 
 app = create_app()
 
+T = TypeVar('T', bound=npt.NBitBase)
 
-def run_model(img_path: str) -> tuple[float, str]:
+
+def plot_probability(
+        data: npt.NDArray[np.floating[T]],
+        img_hash: str,
+        data_dir: str = app.config['DATA_DIR'],
+) -> None:
+    try:
+        prob = plt.imshow(data[0], cmap='nipy_spectral')
+        plt.tick_params(
+            axis='both', left=False, bottom=False,
+            labelleft=False, labelbottom=False,
+        )
+        plt.colorbar(
+            prob,
+            ticks=np.linspace(0, 1, 11),
+            location='bottom',
+            fraction=.0465,
+            pad=0.02,
+        )
+        plt.savefig(
+            os.path.join(data_dir, f'{img_hash}_prob.png'),
+            bbox_inches='tight',
+            dpi=150,
+        )
+    finally:
+        plt.close()
+
+
+def run_models(img_path: str, img_hash: str) -> tuple[float, str]:
     img = read_img(path=img_path)
-    pred = app.config['KERAS_CLOUD_CLASS_MODEL'].predict(img)
-    cloud_class = int(np.argmax(pred))
-    return 69.420, app.config['SWIMCAT_CLASS_MAP'][cloud_class]
+    class_model = app.config['KERAS_CLOUD_CLASS_MODEL']
+    pred_class = class_model.predict(img, verbose=0)
+    cloud_class = int(np.argmax(pred_class))
+    frac_model = app.config['KERAS_CLOUD_FRAC_MODEL']
+    pred_frac = frac_model.predict(img, verbose=0)
+    cloud_frac = (pred_frac > 0.8).sum() * 100 / (128 * 128)
+    plot_probability(data=pred_frac, img_hash=img_hash)
+    # TODO: error if probability is below a certain threshold
+    return cloud_frac, app.config['SWIMCAT_CLASS_MAP'][cloud_class]
+
+
+def resize_img(img_bytes: bytes) -> PIL.Image.Image:
+    img_resized = PIL.Image.open(io.BytesIO(img_bytes))
+
+    if img_resized.mode != 'RGB':
+        img_resized = img_resized.convert('RGB')
+
+    if img_resized.size == (128, 128):
+        return img_resized
+
+    is_square = False
+    if img_resized.width < img_resized.height:
+        is_portrait = True
+        ratio_diff = (img_resized.height - img_resized.width) // 2
+    elif img_resized.width > img_resized.height:
+        is_portrait = False
+        ratio_diff = (img_resized.width - img_resized.height) // 2
+    else:
+        is_square = True
+
+    if is_square:
+        pass
+    elif is_portrait and not is_square:
+        img_resized = img_resized.crop((
+            0, ratio_diff, img_resized.width,
+            img_resized.height - ratio_diff,
+        ))
+    else:
+        img_resized = img_resized.crop((
+            ratio_diff, 0,
+            img_resized.width - ratio_diff, img_resized.height,
+        ))
+    return img_resized.resize(size=(128, 128))
 
 
 @app.route('/', methods=('GET', 'POST'))
@@ -112,11 +197,9 @@ def index() -> str:
             flash('The Image was Submitted Before!', category='danger')
             return redirect(url_for('index'))
 
-        fname = os.path.join(app.config['DATA_DIR'], f'{img_hash}.jpg')
-        with open(fname, 'wb') as f:
-            f.write(img_bytes)
-
-        cloud_frac, cloud_type = run_model(fname)
+        fname = os.path.join(app.config['DATA_DIR'], f'{img_hash}.png')
+        resize_img(img_bytes=img_bytes).save(fname)
+        cloud_frac, cloud_type = run_models(img_path=fname, img_hash=img_hash)
 
         submitted_img = Image(
             id=img_hash,
