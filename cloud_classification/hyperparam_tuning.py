@@ -87,7 +87,7 @@ def build_model(
     )
     model.add(keras.layers.Dropout(rate=dropout_hp))
     # there are 5 possible classes
-    model.add(keras.layers.Dense(units=5))
+    model.add(keras.layers.Dense(units=5, activation='softmax'))
 
     # tune the learning rate of the optimizer
     learning_rate = hp.Float(

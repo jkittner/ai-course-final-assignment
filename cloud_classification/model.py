@@ -35,7 +35,7 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     model.add(keras.layers.Flatten())
     model.add(keras.layers.Dropout(rate=0.55))
     # there are 5 possible classes
-    model.add(keras.layers.Dense(units=5))
+    model.add(keras.layers.Dense(units=5, activation='softmax'))
 
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=0.0003968481343478242),
