@@ -16,89 +16,41 @@ def build_model(
         input_shape: tuple[int, ...],
 ) -> keras.models.Sequential:
     model = keras.models.Sequential()
+    model.add(keras.Input(shape=input_shape))
+    # check how many convolutions make sense
+    for i in range(hp.Int('cnn_layers', 1, 6)):
+        model.add(
+            keras.layers.Conv2D(
+                filters=hp.Int(
+                    f'filters_{i}', 16, 512,
+                    step=2, sampling='log',
+                ),
+                kernel_size=(4, 4),
+                activation='relu',
+                padding='same',
+            ),
+        )
+        model.add(keras.layers.MaxPooling2D((2, 2)))
 
-    # optimize 1st convolution
-    kernel_size_conv1 = hp.Int(
-        name='kernel_size_conv1',
-        min_value=6,
-        max_value=12,
-        step=1,
-    )
-    filter_conv1 = hp.Int(
-        name='filters_conv1',
-        min_value=32,
-        max_value=512,
-        step=2,
-        sampling='log',
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters=filter_conv1,
-            kernel_size=(kernel_size_conv1, kernel_size_conv1),
-            padding='same',
-            activation='relu',
-            input_shape=input_shape,
-        ),
-    )
-
-    model.add(keras.layers.MaxPooling2D(pool_size=(3, 3)))
-
-    # optimize 2nd convolution
-    filter_conv2 = hp.Int(
-        name='filters_conv2',
-        min_value=16,
-        max_value=256,
-        step=2,
-        sampling='log',
-    )
-    model.add(keras.layers.Conv2D(filter_conv2, (5, 5), activation='relu'))
-
-    model.add(keras.layers.MaxPooling2D((3, 3)))
-
-    # optimize filters of 3rd convolution
-    filter_conv3 = hp.Int(
-        name='filters_conv3',
-        min_value=16,
-        max_value=256,
-        step=2,
-        sampling='log',
-    )
-    model.add(keras.layers.Conv2D(filter_conv3, (3, 3), activation='relu'))
-
-    # optimize filter of 4th convolution
-    filter_conv4 = hp.Int(
-        name='filters_conv4',
-        min_value=16,
-        max_value=256,
-        step=2,
-        sampling='log',
-    )
-    model.add(keras.layers.Conv2D(filter_conv4, (3, 3), activation='relu'))
-
-    model.add(keras.layers.MaxPooling2D((3, 3)))
     model.add(keras.layers.Flatten())
 
     # optimize dropout rate
-    dropout_hp = hp.Float(
+    dropout_hp = hp.Choice(
         name='dropout_rate',
-        min_value=0.05,
-        max_value=0.8,
-        step=0.05,
+        values=[0.05, 0.1, 0.2, 0.4, 0.8],
     )
     model.add(keras.layers.Dropout(rate=dropout_hp))
     # there are 5 possible classes
     model.add(keras.layers.Dense(units=5, activation='softmax'))
 
     # tune the learning rate of the optimizer
-    learning_rate = hp.Float(
+    learning_rate = hp.Choice(
         name='learning_rate',
-        min_value=1e-4,
-        max_value=1e-2,
-        sampling='log',
+        values=[1e-2, 1e-3, 1e-4, 1e-5],
     )
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
-        loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        loss=keras.losses.SparseCategoricalCrossentropy(),
         metrics=['accuracy'],
     )
     return model
@@ -122,21 +74,31 @@ def main() -> int:
     tuner = RandomSearch(
         hypermodel=build_model_partial,
         objective='val_accuracy',
-        max_trials=75,
+        max_trials=50,
         executions_per_trial=1,
         seed=42069,
         overwrite=True,
         directory='hyper_param_tuning',
         project_name='test_hyper',
+        max_consecutive_failed_trials=10,
     )
     print(' search_space_summary '.center(79, '='))
     tuner.search_space_summary()
     tuner.search(
         x=model_data.x_train,
         y=model_data.y_train,
-        epochs=100,
+        epochs=150,
         validation_data=(model_data.x_test, model_data.y_test),
-        callbacks=[keras.callbacks.TensorBoard('tensorboard_logs')],
+        callbacks=[
+            keras.callbacks.TensorBoard('tensorboard_logs_cloud_class_tuning'),
+            # don't continue training models if there is no improvement for
+            # 10 epochs
+            keras.callbacks.EarlyStopping(
+                monitor='val_loss',
+                patience=10,
+                start_from_epoch=30,
+            ),
+        ],
     )
     print(' results_summary '.center(79, '='))
     print(tuner.results_summary())
