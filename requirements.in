@@ -1,5 +1,7 @@
 matplotlib
 pillow
 scikit-learn
-tensorflow==2.10.1
-keras-tuner
+tensorflow
+keras-tuner>=1.3.0
+tensorboard
+protobuf<3.21.0
