@@ -89,7 +89,7 @@ def main() -> int:
         max_trials=75,
         executions_per_trial=1,
         seed=42069,
-        overwrite=True,
+        overwrite=False,
         directory='hyper_param_tuning',
         project_name='test_hyper',
         max_consecutive_failed_trials=10,
