@@ -7,38 +7,80 @@ import numpy.typing as npt
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 
+from cloud_classification.utils import Jitter
 from cloud_classification.utils import prepare_test_train
 
 
 def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
     print('constructing model...')
     model = keras.models.Sequential()
+    model.add(keras.Input(shape=input_shape))
     # conv 1
     model.add(
         keras.layers.Conv2D(
-            filters=64,
-            kernel_size=(10, 10),
-            padding='same',
+            filters=16,
+            kernel_size=(4, 4),
             activation='relu',
-            input_shape=input_shape,
+            padding='same',
         ),
     )
-    model.add(keras.layers.MaxPooling2D(pool_size=(3, 3)))
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
     # conv 2
-    model.add(keras.layers.Conv2D(64, (5, 5), activation='relu'))
-    model.add(keras.layers.MaxPooling2D((3, 3)))
+    model.add(
+        keras.layers.Conv2D(
+            filters=512,
+            kernel_size=(4, 4),
+            activation='relu',
+            padding='same',
+        ),
+    )
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
     # conv 3
-    model.add(keras.layers.Conv2D(128, (3, 3), activation='relu'))
-    # conv4
-    model.add(keras.layers.Conv2D(256, (3, 3), activation='relu'))
-    model.add(keras.layers.MaxPooling2D((3, 3)))
-    model.add(keras.layers.Flatten())
-    model.add(keras.layers.Dropout(rate=0.55))
+    model.add(
+        keras.layers.Conv2D(
+            filters=64,
+            kernel_size=(4, 4),
+            activation='relu',
+            padding='same',
+        ),
+    )
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    # conv 2
+    model.add(
+        keras.layers.Conv2D(
+            filters=32,
+            kernel_size=(4, 4),
+            activation='relu',
+            padding='same',
+        ),
+    )
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    # conv 3
+    model.add(
+        keras.layers.Conv2D(
+            filters=64,
+            kernel_size=(4, 4),
+            activation='relu',
+            padding='same',
+        ),
+    )
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    # conv 4
+    model.add(
+        keras.layers.Conv2D(
+            filters=256,
+            kernel_size=(4, 4),
+            activation='relu',
+            padding='same',
+        ),
+    )
+    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(keras.layers.Dropout(rate=0.1))
     # there are 5 possible classes
     model.add(keras.layers.Dense(units=5, activation='softmax'))
 
     model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=0.0003968481343478242),
+        optimizer=keras.optimizers.Adam(learning_rate=0.0001),
         loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=['accuracy'],
     )
@@ -74,10 +116,12 @@ def evaluate_model(
 
 def main() -> int:
     print('preparing model data...')
+    jitter = Jitter(color=[0.66, 1, 1.33])
     model_data = prepare_test_train(
         swimcat_dir='data/swimcat',
         swimcat_ext_dir='data/swimcat-ext',
         rgs_dir='data/rgs/classified',
+        jitter=jitter,
     )
     print('compiling model...')
     model = build_model(input_shape=model_data.x_train.shape[1:])
@@ -86,6 +130,7 @@ def main() -> int:
         x=model_data.x_train,
         y=model_data.y_train,
         epochs=200,
+        batch_size=32,
         validation_data=(model_data.x_test, model_data.y_test),
         verbose=1,
         callbacks=[
@@ -93,7 +138,6 @@ def main() -> int:
         ],
     )
     print('saving model...')
-    model.save('cloud_class_model')
     model.save('cloud_class_model.h5')
 
     print('evaluating model')
