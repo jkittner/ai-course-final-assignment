@@ -1,9 +1,10 @@
-import functools
 import json
+from typing import Any
 
 import keras.callbacks
 import keras.layers
 import keras.models
+from keras_tuner import HyperModel
 from keras_tuner.engine.hyperparameters import HyperParameters
 from keras_tuner.tuners.randomsearch import RandomSearch
 
@@ -11,186 +12,207 @@ from cloud_classification.utils import Jitter
 from cloud_fraction.utils import prepare_test_train
 
 
-def build_model(
-        hp: HyperParameters,
-        input_shape: tuple[int, ...],
-) -> keras.models.Sequential:
-    filters = hp.Int(
-        name='filters_conv',
-        min_value=16,
-        max_value=512,
-        step=2,
-        sampling='log',
-    )
-    activation_conv = hp.Choice(
-        name='activations_conv',
-        values=('relu', 'tanh', 'sigmoid'),
-    )
-    model = keras.models.Sequential()
-    # level 1
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-            input_shape=input_shape,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
+class HyperParamTuningCloudFrac(HyperModel):
+    def build(
+            self,
+            hp: HyperParameters,
+    ) -> keras.models.Sequential:
+        filters_lvl_1 = hp.Int(
+            name='filters_conv_lvl_1',
+            min_value=16,
+            max_value=128,
+            step=2,
+            sampling='log',
+        )
+        model = keras.models.Sequential()
+        model.add(keras.Input(shape=(128, 128, 3)))
+        # level 1
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_1,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_1,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_1,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
 
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    # level 2
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
+        model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+        filters_lvl_2 = hp.Int(
+            name='filters_conv_lvl_2',
+            min_value=64,
+            max_value=512,
+            step=2,
+            sampling='log',
+        )
+        # level 2
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_2,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_2,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_2,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
 
-    model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    # level 3
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
+        model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+        # level 3
+        filters_lvl_3 = hp.Int(
+            name='filters_conv_lvl_3',
+            min_value=256,
+            max_value=1024,
+            step=2,
+            sampling='log',
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_3,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_3,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_3,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2DTranspose(
+                1,
+                kernel_size=(2, 2),
+                strides=(2, 2),
+                padding='same',
+            ),
+        )
+        # level 2
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_2,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_2,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_2,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
 
-    model.add(
-        keras.layers.Conv2DTranspose(
-            1,
-            kernel_size=(2, 2),
-            strides=(2, 2),
-            padding='same',
-        ),
-    )
-    # level 2
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
+        model.add(
+            keras.layers.Conv2DTranspose(
+                1,
+                kernel_size=(2, 2),
+                strides=(2, 2),
+                padding='same',
+            ),
+        )
+        # level 1
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_1,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_1,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        model.add(
+            keras.layers.Conv2D(
+                filters_lvl_1,
+                kernel_size=(3, 3),
+                padding='same',
+                activation='relu',
+            ),
+        )
+        # finally
+        model.add(keras.layers.Dense(1, activation='sigmoid'))
 
-    model.add(
-        keras.layers.Conv2DTranspose(
-            1,
-            kernel_size=(2, 2),
-            strides=(2, 2),
-            padding='same',
-        ),
-    )
-    # level 1
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    model.add(
-        keras.layers.Conv2D(
-            filters,
-            kernel_size=(3, 3),
-            padding='same',
-            activation=activation_conv,
-        ),
-    )
-    # finally
-    model.add(keras.layers.Dense(1, activation='sigmoid'))
+        # optimize the learning rate
+        learning_rate = hp.Choice(
+            name='learning_rate',
+            values=[1e-2, 1e-3, 1e-4],
+        )
+        model.compile(
+            optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
+            loss=keras.losses.BinaryCrossentropy(),
+            metrics=['accuracy'],
+        )
+        return model
 
-    # optimize the learning rate
-    learning_rate = hp.Float(
-        name='learning_rate',
-        min_value=1e-4,
-        max_value=1e-2,
-        sampling='log',
-    )
-    model.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=learning_rate),
-        loss=keras.losses.BinaryCrossentropy(),
-        metrics=['accuracy'],
-    )
-    return model
+    def fit(
+            self,
+            hp: HyperParameters,
+            model: keras.models.Sequential,
+            *args: Any,
+            **kwargs: Any,
+    ) -> Any:
+        return model.fit(
+            *args,
+            batch_size=hp.Choice('batch_size', [32, 64, 128, 256]),
+            **kwargs,
+        )
 
 
 def main() -> int:
@@ -200,31 +222,38 @@ def main() -> int:
         daytime_dir='data/swimseg',
         nighttime_dir='data/swinseg',
         jitter=jitter,
+        max_nr=100,
     )
     print('compiling model for hyperparameter tuning...')
 
-    build_model_partial = functools.partial(
-        build_model,
-        input_shape=(128, 128, 3),
-    )
     tuner = RandomSearch(
-        hypermodel=build_model_partial,
+        hypermodel=HyperParamTuningCloudFrac(),
         objective='val_accuracy',
-        max_trials=50,
+        max_trials=10,
         executions_per_trial=1,
         seed=42069,
-        overwrite=True,
+        overwrite=False,
         directory='hyper_param_tuning_cloud_frac',
-        project_name='test_hyper',
+        project_name='hyper_cloud_frac',
+        max_consecutive_failed_trials=10,
     )
     print(' search_space_summary '.center(79, '='))
     tuner.search_space_summary()
     tuner.search(
         x=model_data.x_train,
         y=model_data.y_train,
-        epochs=100,
+        epochs=150,
         validation_data=(model_data.x_test, model_data.y_test),
-        callbacks=[keras.callbacks.TensorBoard('tensorboard_logs_cloud_frac')],
+        callbacks=[
+            keras.callbacks.TensorBoard('tensorboard_logs_cloud_frac'),
+            # don't continue training models if there is no improvement for
+            # 10 epochs
+            keras.callbacks.EarlyStopping(
+                monitor='val_loss',
+                patience=10,
+                start_from_epoch=30,
+            ),
+        ],
     )
     print(' results_summary '.center(79, '='))
     print(tuner.results_summary())
