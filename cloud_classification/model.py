@@ -75,13 +75,14 @@ def build_model(input_shape: tuple[int, ...]) -> keras.models.Sequential:
         ),
     )
     model.add(keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(keras.layers.Flatten())
     model.add(keras.layers.Dropout(rate=0.1))
     # there are 5 possible classes
     model.add(keras.layers.Dense(units=5, activation='softmax'))
 
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=0.0001),
-        loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        loss=keras.losses.SparseCategoricalCrossentropy(),
         metrics=['accuracy'],
     )
     return model
