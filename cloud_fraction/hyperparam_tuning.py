@@ -222,7 +222,6 @@ def main() -> int:
         daytime_dir='data/swimseg',
         nighttime_dir='data/swinseg',
         jitter=jitter,
-        max_nr=100,
     )
     print('compiling model for hyperparameter tuning...')
 
