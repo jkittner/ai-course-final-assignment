@@ -130,7 +130,7 @@ def main() -> int:
     history = model.fit(
         x=model_data.x_train,
         y=model_data.y_train,
-        epochs=200,
+        epochs=100,
         batch_size=32,
         validation_data=(model_data.x_test, model_data.y_test),
         verbose=1,
