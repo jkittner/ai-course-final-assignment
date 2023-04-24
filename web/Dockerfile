@@ -25,3 +25,4 @@ RUN venv/bin/pip install -r requirements.txt
 
 COPY web web
 COPY cloud_classification cloud_classification
+COPY resources resources
