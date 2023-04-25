@@ -1,0 +1,40 @@
+version: "3"
+services:
+
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: ./web/Dockerfile
+    image: app
+    # user: nobody
+    environment:
+      - MPLCONFIGDIR=/tmp/.config/matplotlib
+    command: [
+      /usr/src/app/venv/bin/gunicorn,
+      --log-level, debug,
+      --bind, "0.0.0.0:5000",
+      --workers=2,
+      --threads=2,
+      --max-requests=5000,
+      --max-requests-jitter=20,
+      "web.wsgi:app"
+    ]
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider http://localhost:5000/ || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+  nginx:
+    container_name: nginx
+    image: nginx:mainline
+    healthcheck:
+      test: ["CMD-SHELL", "service nginx status || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      - app

@@ -10,7 +10,7 @@ repos:
     -   id: name-tests-test
     -   id: debug-statements
     -   id: check-added-large-files
-        exclude: ^figs/
+        exclude: ^figs/|^resources/|^web/static/img/
     -   id: requirements-txt-fixer
     -   id: double-quote-string-fixer
     -   id: check-merge-conflict
