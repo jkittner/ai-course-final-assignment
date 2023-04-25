@@ -17,7 +17,7 @@ This was a project done during the course:
    ```
 1. start all containers
    ```bash
-   docker-compose -f docker-compose.yml -f docker-compose.dev.yml upi
+   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
    ```
 1. visit [`https://127.0.0.1:8080`](https://127.0.0.1:8080) in your browser
 
