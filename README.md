@@ -1,3 +1,5 @@
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/jkittner/ai-course-final-assignment/master.svg)](https://results.pre-commit.ci/latest/github/jkittner/ai-course-final-assignment/master)
+
 # ai-course-final-assignment
 
 This was a project done during the course:
