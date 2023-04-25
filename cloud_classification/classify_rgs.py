@@ -98,7 +98,7 @@ def main() -> int:
                 file_names = []
 
     df_all = pd.concat(df_stack).sort_index()
-    df_all.to_csv('classified_rgs.csv')
+    df_all.to_csv('data/classified_rgs.csv')
     return 0
 
 
