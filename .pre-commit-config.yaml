@@ -33,18 +33,18 @@ repos:
     rev: 0.1.4
     hooks:
     -    id: double-indent
--   repo: https://github.com/asottile/reorder_python_imports
+-   repo: https://github.com/asottile/reorder-python-imports
     rev: v3.9.0
     hooks:
     -   id: reorder-python-imports
         args: [--py39-plus]
 -   repo: https://github.com/asottile/add-trailing-comma
-    rev: v2.4.0
+    rev: v2.5.1
     hooks:
     -   id: add-trailing-comma
         args: [--py36-plus]
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.2
+    rev: v3.6.0
     hooks:
     -   id: pyupgrade
         args: [--py310-plus]
@@ -55,7 +55,7 @@ repos:
         args: [--prose-wrap, always, --print-width=88]
         types: [markdown]
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.2.0
+    rev: v1.3.0
     hooks:
     -   id: mypy
         additional_dependencies: [numpy==1.24.1]
